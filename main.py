@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from plotnine import ggplot, aes, geom_point, geom_smooth, labs
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
 
 # Title of the app
 st.title("Simple Linear Regression Interactive App")
@@ -62,11 +64,6 @@ if data is not None:
     else:
         x_column, y_column = 'x', 'y'
 
-    # Calculate and display summary statistics
-    summary_df = calculate_summary_statistics(data, x_column, y_column)
-    st.write("### Summary Statistics:")
-    st.dataframe(summary_df)
-
     # Plotting
     st.write("### Simple Linear Regression Plot:")
     plot = (
@@ -79,3 +76,15 @@ if data is not None:
     fig = plot.draw()
     plt.close(fig)
     st.pyplot(fig)
+
+    # Display ANOVA table
+    formula = f"{y_column} ~ {x_column}"
+    model = ols(formula, data=data).fit()
+    anova_table = sm.stats.anova_lm(model, typ=2)
+    st.write("### ANOVA Table:")
+    st.dataframe(anova_table)
+
+    # Calculate and display summary statistics
+    summary_df = calculate_summary_statistics(data, x_column, y_column)
+    st.write("###Additional Summary Statistics:")
+    st.dataframe(summary_df)
