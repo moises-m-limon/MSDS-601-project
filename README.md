@@ -4,7 +4,7 @@ Are you planning on using Linear Regression on your dataset?
 I can help identify common problems with linear regression models.
 
 
-Do you know if your data is heteroskdastic? Are you sure your variables have a linear relationship? 
+Do you know if your data is heteroskedastic? Are you sure your variables have a linear relationship? 
 
 Do your residuals follow a normal distribution?
 
