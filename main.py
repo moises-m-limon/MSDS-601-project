@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from plotnine import ggplot, aes, geom_point, geom_smooth, labs
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
+from ss_decomp import ss_decomp
 
 # Title of the app
 st.title("Simple Linear Regression Interactive App")
@@ -23,6 +24,7 @@ def load_data(data_option):
             return data
     else:
         return generate_synthetic_data()
+
 
 
 # Function to generate synthetic data
@@ -60,7 +62,11 @@ data_option = st.sidebar.radio(
 )
 data = load_data(data_option)
 
+
+
 if data is not None:
+    complete_index = data.notnull().all(axis=1) 
+    data = data[complete_index]
     if data_option == "Upload CSV":
         x_column = st.sidebar.selectbox("Select X Column", data.columns)
         y_column = st.sidebar.selectbox("Select Y Column", data.columns)
@@ -78,6 +84,14 @@ if data is not None:
     fig = plot.draw()
     plt.close(fig)
     st.pyplot(fig)
+
+    st.write('### Residual Plots:')
+
+    gg1 =  ss_decomp(data[x_column].values.reshape(-1, 1), data[y_column].values)
+    
+
+    st.pyplot(gg1.draw())
+
 
     st.write("### Data Preview:")
     st.dataframe(data)
