@@ -3,4 +3,4 @@ pandas
 numpy
 matplotlib
 plotnine
-sklearn
+scikit-learn
