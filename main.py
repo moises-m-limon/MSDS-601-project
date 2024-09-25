@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from plotnine import ggplot, aes, geom_point, geom_smooth, labs
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Title of the app
 st.title("Simple Linear Regression Interactive App")
@@ -67,15 +67,18 @@ if data is not None:
     st.write("### Summary Statistics:")
     st.dataframe(summary_df)
 
-    # Plotting
+    # Plotting with Plotly
     st.write("### Simple Linear Regression Plot:")
-    plot = (
-        ggplot(data, aes(x=x_column, y=y_column)) +
-        geom_point(color='blue', size=2) +
-        geom_smooth(method='lm', color='red', se=False) +
-        labs(title='Simple Linear Regression', x=x_column, y=y_column)
-    )
+
+    # Create scatter plot
+    fig = px.scatter(data, x=x_column, y=y_column, title='Simple Linear Regression', labels={x_column: x_column, y_column: y_column})
+
+    # Fit linear regression model
+    model = np.polyfit(data[x_column], data[y_column], 1)
+    line = model[0] * data[x_column] + model[1]
     
-    fig = plot.draw()
-    plt.close(fig)
-    st.pyplot(fig)
+    # Add line to plot
+    fig.add_traces(go.Scatter(x=data[x_column], y=line, mode='lines', name='Regression Line', line=dict(color='red')))
+    
+    # Show the figure
+    st.plotly_chart(fig)
