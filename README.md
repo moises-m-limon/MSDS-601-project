@@ -1,4 +1,4 @@
-# Data Busters
+# Data Doctor
 
 Are you planning on using Linear Regression on your dataset? 
 I can help identify common problems with linear regression models.
