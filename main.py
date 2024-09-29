@@ -26,19 +26,34 @@ def load_data(data_option):
         return generate_synthetic_data()
 
 
-
+# TODO : FEATURE ERROR W/ DIFF DISTRIBUTIONS
 # Function to generate synthetic data
 def generate_synthetic_data():
     n_samples = st.sidebar.slider("Number of Samples", 10, 100, 30)
     slope = st.sidebar.number_input("Slope", 1.0)
     intercept = st.sidebar.number_input("Intercept", 0.0)
+
+    ## generate new feature -- t, uniform
+
+    drop_box = st.sidebar.selectbox(
+        "Select Distribution", ["Normal", "t", "Uniform", "log-Normal"]
+    )
     noise_level = st.sidebar.slider("Noise Level", 0.0, 10.0, 1.0)
 
-    np.random.seed(42)
+    np.random.seed(42)  # setting randomized fn
     x = np.random.rand(n_samples) * 10
-    noise = np.random.normal(0, noise_level, n_samples)
-    y = slope * x + intercept + noise
 
+    # use distr from selectbox
+    if drop_box == "Normal":
+        noise = np.random.normal(0, noise_level, n_samples)
+    elif drop_box == "Uniform":
+        noise = np.random.uniform(-noise_level, noise_level, n_samples)
+    elif drop_box == "t":
+        noise = np.random.standard_t(df=10, size=n_samples) * noise_level
+    elif drop_box == "log-Normal":
+        noise = np.random.lognormal(x.mean(), x.std(), n_samples)
+
+    y = slope * x + intercept + noise
     return pd.DataFrame({"x": x, "y": y})
 
 
@@ -63,9 +78,8 @@ data_option = st.sidebar.radio(
 data = load_data(data_option)
 
 
-
 if data is not None:
-    complete_index = data.notnull().all(axis=1) 
+    complete_index = data.notnull().all(axis=1)
     data = data[complete_index]
     if data_option == "Upload CSV":
         x_column = st.sidebar.selectbox("Select X Column", data.columns)
@@ -85,17 +99,12 @@ if data is not None:
     plt.close(fig)
     st.pyplot(fig)
 
-    st.write('### Residual Plots:')
-
-    gg1 =  ss_decomp(data[x_column].values.reshape(-1, 1), data[y_column].values)
-    
-
+    st.write("### Residual Plots:")
+    gg1 = ss_decomp(data[x_column].values.reshape(-1, 1), data[y_column].values)
     st.pyplot(gg1.draw())
-
 
     st.write("### Data Preview:")
     st.dataframe(data)
-
     # Radio button for analysis type
     analysis_type = st.sidebar.radio(
         "Select Analysis Type", ["Summary Statistics", "ANOVA"]
