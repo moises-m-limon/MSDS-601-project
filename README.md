@@ -1,5 +1,7 @@
 # Data Doctor
 
+https://slr-cautionary-tales.streamlit.app/
+
 Are you planning on using Linear Regression on your dataset? 
 I can help identify common problems with linear regression models.
 
