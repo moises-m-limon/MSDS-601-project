@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from plotnine import ggplot, aes, geom_point, geom_smooth, labs
+from plotnine import ggplot, aes, geom_point, geom_smooth, labs, geom_histogram
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
 from ss_decomp import ss_decomp
@@ -33,8 +33,6 @@ def generate_synthetic_data():
     slope = st.sidebar.number_input("Slope", 1.0)
     intercept = st.sidebar.number_input("Intercept", 0.0)
 
-    ## generate new feature -- t, uniform
-
     drop_box = st.sidebar.selectbox(
         "Select Distribution", ["Normal", "t", "Uniform", "log-Normal"]
     )
@@ -54,8 +52,15 @@ def generate_synthetic_data():
         noise = np.random.lognormal(x.mean(), x.std(), n_samples)
 
     y = slope * x + intercept + noise
-    return pd.DataFrame({"x": x, "y": y})
+    return pd.DataFrame({"x": x, "y": y}), noise
 
+#fn to plot histogram of errors 
+def plot_error_histogram(df, noise):
+    print(noise)
+    plot = (ggplot(df, aes(x='noise')) +
+            geom_histogram(binwidth=0.5, fill='skyblue', color='black') +
+            labs(title='Error Histogram', x='Error (Noise)', y='Frequency'))
+    return plot
 
 # Function to calculate summary statistics
 def calculate_summary_statistics(data, x_column, y_column):
@@ -75,7 +80,7 @@ def calculate_summary_statistics(data, x_column, y_column):
 data_option = st.sidebar.radio(
     "Select Data Input Method", ["Generate Data", "Upload CSV"]
 )
-data = load_data(data_option)
+data, noise = load_data(data_option)
 
 
 if data is not None:
@@ -102,6 +107,9 @@ if data is not None:
     st.write("### Residual Plots:")
     gg1 = ss_decomp(data[x_column].values.reshape(-1, 1), data[y_column].values)
     st.pyplot(gg1.draw())
+
+    st.write("### Error Histogram:")
+    st.pyplot(plot_error_histogram(data, noise).draw())
 
     st.write("### Data Preview:")
     st.dataframe(data)
