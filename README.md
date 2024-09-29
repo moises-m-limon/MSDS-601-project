@@ -36,14 +36,13 @@ To run the Probability and Statistics Learning App on your personal laptop, foll
 
    ```
    pip install -r requirements.txt
-   pip install plotnine==0.8.0 --no-deps
    ```
 
 4. **Run the App**
 
    Once the dependencies are installed, you can launch the app using Streamlit:
 
-   ```bash
+   ```
    streamlit run main.py
    ```
 
