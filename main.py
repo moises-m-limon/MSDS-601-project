@@ -57,7 +57,7 @@ def generate_synthetic_data():
 
     y = slope * x + intercept + noise
     y2 = slope * (x**2) + intercept + noise
-    return pd.DataFrame({"x": x, "y": y, "qx": x, "qy": y2 })
+    return pd.DataFrame({"x": x, "y": y, "qx": x, "qy": y2})
 
 
 # Function to calculate summary statistics
@@ -73,14 +73,16 @@ def calculate_summary_statistics(data, x_column, y_column):
     }
     return pd.DataFrame(summary_stats, index=["X", "Y"]).T
 
+
 # Function to generate multicollinear data
 def generate_multicollinear_data(n=100):
     np.random.seed(42)
     x1 = np.random.uniform(1, 10, n)
     x2 = 2 * x1 + np.random.normal(0, 0.1, n)
     y = 3 * x1 + 4 * x2 + np.random.normal(0, 1, n)
-        
-    return pd.DataFrame({'x1': x1, 'x2': x2, 'y': y})
+
+    return pd.DataFrame({"x1": x1, "x2": x2, "y": y})
+
 
 # Function to generate non-multicollinear data
 def generate_non_multicollinear_data(n=100):
@@ -88,24 +90,25 @@ def generate_non_multicollinear_data(n=100):
     x1 = np.random.uniform(1, 10, n)
     x2 = np.random.uniform(1, 10, n)  # Independent of x1
     y = 3 * x1 + 4 * x2 + np.random.normal(0, 1, n)
-    
-    return pd.DataFrame({'x1': x1, 'x2': x2, 'y': y})
+
+    return pd.DataFrame({"x1": x1, "x2": x2, "y": y})
 
 
 def generate_data_v2(y_expression="x**2", n=100, xmin=-20, xmax=50, sigma=700):
     np.random.seed(42)
     x = np.linspace(xmin, xmax, n)
-    
+
     # Evaluate y based on the expression
     y = eval(y_expression) + np.random.normal(0, sigma, n)
-    
+
     return pd.DataFrame({"x": x, "y": y})
+
 
 def display_data(df):
     st.write("### Generated Quadratic Data (y = x^2 + noise):")
-    
+
     fig, ax = plt.subplots()
-    sns.scatterplot(data=df, x='x', y='y', ax=ax)
+    sns.scatterplot(data=df, x="x", y="y", ax=ax)
     ax.set_title("Scatter Plot of Quadratic Data")
     st.pyplot(fig)
 
@@ -134,17 +137,13 @@ if data is not None:
         + labs(title="Simple Linear Regression", x=x_column, y=y_column)
     )
 
-   
-
-
-
     plot_quad = (
-        ggplot(data, aes(x="qx", y="qy")) 
+        ggplot(data, aes(x="qx", y="qy"))
         + geom_point(color="blue", size=2)
-        + geom_smooth(method="lm", color="red", se=False) 
-        #+ geom_line(aes(y=data[x_column]**2), color="red", linetype='dashed') 
-        + labs(title="Quadratic Data (True vs Linear)", x="x", y="y"))
-    
+        + geom_smooth(method="lm", color="red", se=False)
+        # + geom_line(aes(y=data[x_column]**2), color="red", linetype='dashed')
+        + labs(title="Quadratic Data (True vs Linear)", x="x", y="y")
+    )
 
     col1, col2 = st.columns(2)
 
@@ -159,23 +158,18 @@ if data is not None:
         fig_quad = plot_quad.draw()
         plt.close(fig_quad)
         st.pyplot(fig_quad)
-   
 
     st.write("### Residual Plots:")
-    
-
 
     col1, col2 = st.columns(2)
-
 
     gg1 = ss_decomp(data[x_column].values.reshape(-1, 1), data[y_column].values)
     st.pyplot(gg1.draw())
 
-    gg2 = ss_decomp(data["qx"].values.reshape(-1, 1), data["qy"].values, include_quadratic=False)
+    gg2 = ss_decomp(
+        data["qx"].values.reshape(-1, 1), data["qy"].values, include_quadratic=False
+    )
     st.pyplot(gg2.draw())
-      
-      
-    
 
     st.write("### Data Preview:")
     st.dataframe(data)
@@ -184,22 +178,18 @@ if data is not None:
         "Select Analysis Type", ["Summary Statistics", "ANOVA"]
     )
 
-    # # Add influential points diagnostics (Cook's Distance and Leverage)
-    # data, model = add_influential_point_diagnostics(data, x_column, y_column)
-
-    # # Create and display diagnostic plot
-    # st.write("### Influence Plot (Cook's Distance vs Leverage):")
-    # plot_diagnostics(data)
-
-
     # Streamlit App
     st.title("Multicollinear vs Non-Multicollinear Data Comparison")
 
     # Choose which dataset to display
-    dataset_choice = st.sidebar.selectbox("Select Dataset", ("Multicollinear Data", "Non-Multicollinear Data"))
+    dataset_choice = st.sidebar.selectbox(
+        "Select Dataset", ("Multicollinear Data", "Non-Multicollinear Data")
+    )
 
     # Sidebar for customizing the data
-    n = st.sidebar.slider('Number of data points', min_value=50, max_value=500, value=100, step=10)
+    n = st.sidebar.slider(
+        "Number of data points", min_value=50, max_value=500, value=100, step=10
+    )
 
     # Generate the data based on user input
     # Generate both datasets based on user input
@@ -217,23 +207,25 @@ if data is not None:
     st.write(df_selected.head())
 
     # Fit the MLR model and get the coefficients
-    mlr_model = smf.ols('y ~ x1 + x2', data=df_selected).fit()
+    mlr_model = smf.ols("y ~ x1 + x2", data=df_selected).fit()
 
     # Create 3D scatter plot for the selected dataset using Plotly
     fig = go.Figure()
 
     # Scatter plot of the data points
-    fig.add_trace(go.Scatter3d(
-        x=df_selected['x1'], 
-        y=df_selected['x2'], 
-        z=df_selected['y'], 
-        mode='markers',
-        marker=dict(size=5, opacity=0.8)
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=df_selected["x1"],
+            y=df_selected["x2"],
+            z=df_selected["y"],
+            mode="markers",
+            marker=dict(size=5, opacity=0.8),
+        )
+    )
 
     # Add a surface plot representing the regression plane
-    x1_range = np.linspace(df_selected['x1'].min(), df_selected['x1'].max(), 20)
-    x2_range = np.linspace(df_selected['x2'].min(), df_selected['x2'].max(), 20)
+    x1_range = np.linspace(df_selected["x1"].min(), df_selected["x1"].max(), 20)
+    x2_range = np.linspace(df_selected["x2"].min(), df_selected["x2"].max(), 20)
     x1_grid, x2_grid = np.meshgrid(x1_range, x2_range)
 
     # Get regression plane parameters
@@ -241,22 +233,13 @@ if data is not None:
     y_grid = b0 + b1 * x1_grid + b2 * x2_grid
 
     # Surface plot of the fitted plane
-    fig.add_trace(go.Surface(
-        x=x1_grid, 
-        y=x2_grid, 
-        z=y_grid, 
-        opacity=0.5
-    ))
+    fig.add_trace(go.Surface(x=x1_grid, y=x2_grid, z=y_grid, opacity=0.5))
 
     # Layout settings
     fig.update_layout(
-        title=f'3D Plot of {dataset_choice} with Regression Plane',
-        scene=dict(
-            xaxis_title='x1',
-            yaxis_title='x2',
-            zaxis_title='y'
-        ),
-        margin=dict(l=0, r=0, b=0, t=50)
+        title=f"3D Plot of {dataset_choice} with Regression Plane",
+        scene=dict(xaxis_title="x1", yaxis_title="x2", zaxis_title="y"),
+        margin=dict(l=0, r=0, b=0, t=50),
     )
 
     # Display the plot in Streamlit
