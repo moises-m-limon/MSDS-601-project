@@ -170,18 +170,11 @@ if data is not None:
 
     gg1 = ss_decomp(data[x_column].values.reshape(-1, 1), data[y_column].values)
     st.pyplot(gg1.draw())
+
+    gg2 = ss_decomp(data["qx"].values.reshape(-1, 1), data["qy"].values, include_quadratic=False)
+    st.pyplot(gg2.draw())
       
-
-
-
-
-
-
-
-
-
-
-
+      
     
 
     st.write("### Data Preview:")
