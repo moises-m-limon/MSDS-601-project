@@ -4,3 +4,4 @@ numpy
 matplotlib
 plotnine
 scikit-learn
+plotly
