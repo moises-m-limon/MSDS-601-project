@@ -41,11 +41,11 @@ def ss_decomp(X, y, include_quadratic=False):
 
     # make a ggplot
     df = pd.DataFrame({"X": X_plot, "y": y, "predicted": y_pred, "y_mean": y_mean})
-
+    
     gg1 = (
         ggplot(df, aes(x="X", y="y"))
         + geom_point()
-        + geom_smooth(method="lm", formula="y ~ x + I(x**2)" if include_quadratic else "y ~ x", se=False)
+        + geom_smooth(method="lm", formula="y ~ x", se=False)
         + geom_hline(yintercept=y_mean, linetype="dashed")
         + geom_segment(
             aes(xend="X", y="predicted", yend="y_mean"), color="blue", linetype="dashed"
@@ -53,7 +53,7 @@ def ss_decomp(X, y, include_quadratic=False):
         + geom_segment(
             aes(xend="X", yend="predicted"), color="red", linetype="dashed"
         )  # SSE components
-        + ggtitle(f"R^2 is {np.round(1-SSE/SST, 4)}")
+        + ggtitle(f"Regression Plot: {'y ~ x + I(x**2)' if include_quadratic else 'y ~ x'}")
     )
 
     return gg1

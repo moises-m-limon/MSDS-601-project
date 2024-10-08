@@ -12,22 +12,6 @@ import plotly.graph_objs as go
 # Title of the app
 st.title("Simple Linear Regression Interactive App")
 
-
-# Function to load and clean data
-def load_data(data_option):
-    if data_option == "Upload CSV":
-        uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type="csv")
-        if uploaded_file:
-            data = pd.read_csv(uploaded_file)
-            if data.empty:
-                st.error("The uploaded CSV file is empty.")
-                return None
-            st.success("Data loaded successfully.")
-            return data
-    else:
-        return generate_synthetic_data()
-
-
 # TODO : FEATURE ERROR W/ DIFF DISTRIBUTIONS
 # Function to generate synthetic data
 def generate_synthetic_data():
@@ -114,20 +98,13 @@ def display_data(df):
 
 
 # Main logic
-data_option = st.sidebar.radio(
-    "Select Data Input Method", ["Generate Data", "Upload CSV"]
-)
-data = load_data(data_option)
+data = generate_synthetic_data()
 
 
 if data is not None:
     complete_index = data.notnull().all(axis=1)
     data = data[complete_index]
-    if data_option == "Upload CSV":
-        x_column = st.sidebar.selectbox("Select X Column", data.columns)
-        y_column = st.sidebar.selectbox("Select Y Column", data.columns)
-    else:
-        x_column, y_column = "x", "y"
+    x_column, y_column = "x", "y"
 
     st.write("### Simple Linear Regression Plot:")
     plot = (
@@ -162,17 +139,17 @@ if data is not None:
     st.write("### Residual Plots:")
 
     col1, col2 = st.columns(2)
+        # First column: Display the first plot
+    with col1:
+        gg1 = ss_decomp(data[x_column].values.reshape(-1, 1), data[y_column].values)
+        st.pyplot(gg1.draw())
 
-    gg1 = ss_decomp(data[x_column].values.reshape(-1, 1), data[y_column].values)
-    st.pyplot(gg1.draw())
+    # Second column: Display the quadratic plot
+    with col2:
+        gg2 = ss_decomp(
+        data["qx"].values.reshape(-1, 1), data["qy"].values, include_quadratic=True)
+        st.pyplot(gg2.draw())
 
-    gg2 = ss_decomp(
-        data["qx"].values.reshape(-1, 1), data["qy"].values, include_quadratic=False
-    )
-    st.pyplot(gg2.draw())
-
-    st.write("### Data Preview:")
-    st.dataframe(data)
     # Radio button for analysis type
     analysis_type = st.sidebar.radio(
         "Select Analysis Type", ["Summary Statistics", "ANOVA"]
@@ -202,9 +179,6 @@ if data is not None:
     else:
         df_selected = df_non_multicollinear
         st.subheader("Non-Multicollinear Data")
-
-    # Display data
-    st.write(df_selected.head())
 
     # Fit the MLR model and get the coefficients
     mlr_model = smf.ols("y ~ x1 + x2", data=df_selected).fit()
