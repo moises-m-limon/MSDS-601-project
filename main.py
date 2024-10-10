@@ -8,27 +8,40 @@ import statsmodels.formula.api as smf
 from statsmodels.formula.api import ols
 from ss_decomp import ss_decomp
 import plotly.graph_objs as go
+from resid_plot import display_resid
+from resid_hist import display_resid_histogram
 
 # Title of the app
-st.title("Simple Linear Regression Interactive App")
+st.header("Data Doctor: Diagnosing regression problems")
 
-# TODO : FEATURE ERROR W/ DIFF DISTRIBUTIONS
 # Function to generate synthetic data
 def generate_synthetic_data():
     n_samples = st.sidebar.slider("Number of Samples", 10, 100, 30)
-    slope = st.sidebar.number_input("Slope", 1.0)
-    intercept = st.sidebar.number_input("Intercept", 0.0)
+    slope = st.sidebar.slider("Slope", 1, 100, 10 )
+    col1, col2 = st.sidebar.columns(2)
+
+    # Add inputs to the sidebar columns
+    with col1:
+        x_min = st.number_input("x_min", value=0)
+
+    with col2:
+        x_max = st.number_input("x_max", value=5)
+
+    # intercept = st.sidebar.number_input("Intercept", 0.0)
 
     ## generate new feature -- t, uniform
 
     drop_box = st.sidebar.selectbox(
-        "Select Distribution", ["Normal", "t", "Uniform", "log-Normal"]
+        "Select Distribution of Errors", ["Normal", "t", "Uniform", "log-Normal"]
     )
-    noise_level = st.sidebar.slider("Noise Level", 0.0, 10.0, 1.0)
+    noise_level = st.sidebar.slider("Noise Level", 5.0, 50.0, 15.)
+    noise_type = st.sidebar.radio(
+        "Select noise type:",
+        ("Homoskedastic", "Heteroskedastic")
+    )
 
     np.random.seed(42)  # setting randomized fn
-    x = np.random.rand(n_samples) * 10
-
+    x = np.random.uniform(low=x_min, high=x_max, size=n_samples)
     # use distr from selectbox
     if drop_box == "Normal":
         noise = np.random.normal(0, noise_level, n_samples)
@@ -39,8 +52,12 @@ def generate_synthetic_data():
     elif drop_box == "log-Normal":
         noise = np.random.lognormal(x.mean(), x.std(), n_samples)
 
-    y = slope * x + intercept + noise
-    y2 = slope * (x**2) + intercept + noise
+    if noise_type == "Heteroskedastic":
+        noise = noise * x/2
+
+    y = slope * x + noise
+    y2 = slope * (x**2) + noise
+
     return pd.DataFrame({"x": x, "y": y, "qx": x, "qy": y2})
 
 
@@ -87,16 +104,6 @@ def generate_data_v2(y_expression="x**2", n=100, xmin=-20, xmax=50, sigma=700):
 
     return pd.DataFrame({"x": x, "y": y})
 
-
-def display_data(df):
-    st.write("### Generated Quadratic Data (y = x^2 + noise):")
-
-    fig, ax = plt.subplots()
-    sns.scatterplot(data=df, x="x", y="y", ax=ax)
-    ax.set_title("Scatter Plot of Quadratic Data")
-    st.pyplot(fig)
-
-
 # Main logic
 data = generate_synthetic_data()
 
@@ -106,12 +113,12 @@ if data is not None:
     data = data[complete_index]
     x_column, y_column = "x", "y"
 
-    st.write("### Simple Linear Regression Plot:")
+    st.write('What if we try to fit a linear model to non-linear data?')
     plot = (
         ggplot(data, aes(x=x_column, y=y_column))
         + geom_point(color="blue", size=2)
         + geom_smooth(method="lm", color="red", se=False)
-        + labs(title="Simple Linear Regression", x=x_column, y=y_column)
+        + labs(title="X & Y have a linear relationship", x=x_column, y=y_column)
     )
 
     plot_quad = (
@@ -119,7 +126,7 @@ if data is not None:
         + geom_point(color="blue", size=2)
         + geom_smooth(method="lm", color="red", se=False)
         # + geom_line(aes(y=data[x_column]**2), color="red", linetype='dashed')
-        + labs(title="Quadratic Data (True vs Linear)", x="x", y="y")
+        + labs(title="X & Y have a non-linear relationship", x="x", y="y")
     )
 
     col1, col2 = st.columns(2)
@@ -136,19 +143,64 @@ if data is not None:
         plt.close(fig_quad)
         st.pyplot(fig_quad)
 
+    st.write("Solution: Transformation of one of our variables")
+
+    transform = st.selectbox(
+        "Select a transformation for x:",
+        ["y = log(x)", "y = e^x", "y = x^2", "y = x^(1/2)"]
+    )
+
+    # Apply the transformation based on the selection
+    transformed_data = data.copy()
+    if transform == "y = x^2":
+        transformed_data['qy'] = np.sqrt(transformed_data['qy'])
+    elif transform == "y = log(x)":
+        # Ensure all values are positive before applying log
+        transformed_data = transformed_data[transformed_data['qy'] > 0]
+        transformed_data['qy'] = np.log(transformed_data['qy'])
+    elif transform == "y = e^x":
+        transformed_data['qy'] = np.log(transformed_data['qy'])
+    elif transform == "y = x^(1/2)":
+        transformed_data['qy'] = transformed_data['qy'] ** 2
+
+    # Now create the ggplot with the transformed data
+    plot_transform = (
+        ggplot(transformed_data, aes(x="qx", y="qy"))
+        + geom_point(color="blue", size=2)
+        + geom_smooth(method="lm", color="red", se=False)
+        + labs(title=f"Transformation: {transform}", x="x", y="y")
+    )
+    
+    col1, col2 = st.columns(2)
+        # First column: Display the original plot
+    with col1:
+        # gg1 = ss_decomp(data[x_column].values.reshape(-1, 1), data[y_column].values)
+        st.pyplot(plot_quad.draw())
+
+    # Second column: Display the quadratic res plot
+    with col2:
+        st.pyplot(plot_transform.draw())
+
     st.write("### Residual Plots:")
+    st.write('These plots are a great way to see check for heteroskedasticity.')
 
     col1, col2 = st.columns(2)
-        # First column: Display the first plot
+        # First column: Display the res plot
     with col1:
-        gg1 = ss_decomp(data[x_column].values.reshape(-1, 1), data[y_column].values)
-        st.pyplot(gg1.draw())
+        resid_plot =  display_resid(data['x'], data['y'],"X & Y have a linear relationship")
+        st.pyplot(resid_plot.draw())
 
-    # Second column: Display the quadratic plot
+    # Second column: Display the quadratic res plot
     with col2:
-        gg2 = ss_decomp(
-        data["qx"].values.reshape(-1, 1), data["qy"].values, include_quadratic=True)
-        st.pyplot(gg2.draw())
+        q_resid_plot =  display_resid(data['x'], data['qy'], "X & Y have a non-linear relationship")
+        st.pyplot(q_resid_plot.draw())
+
+    st.write("### Residual Histogram:")
+
+
+
+    resid_hist =  display_resid_histogram(data['x'], data['y'],"X & Y have a linear relationship")
+    st.pyplot(resid_hist.draw())
 
     # Radio button for analysis type
     analysis_type = st.sidebar.radio(
@@ -156,25 +208,25 @@ if data is not None:
     )
 
     # Streamlit App
-    st.title("Multicollinear vs Non-Multicollinear Data Comparison")
+    st.title("Multicollinearity")
 
-    # Choose which dataset to display
-    dataset_choice = st.sidebar.selectbox(
-        "Select Dataset", ("Multicollinear Data", "Non-Multicollinear Data")
-    )
+    # # Choose which dataset to display
+    # dataset_choice = st.sidebar.selectbox(
+    #     "Select Dataset", ("Multicollinear Data", "Non-Multicollinear Data")
+    # )
 
     # Sidebar for customizing the data
-    n = st.sidebar.slider(
-        "Number of data points", min_value=50, max_value=500, value=100, step=10
-    )
+    # n = st.sidebar.slider(
+    #     "Number of data points", min_value=50, max_value=500, value=100, step=10
+    # )
 
     # Generate the data based on user input
     # Generate both datasets based on user input
-    df_multicollinear = generate_multicollinear_data(n)
-    df_non_multicollinear = generate_non_multicollinear_data(n)
+    df_multicollinear = generate_multicollinear_data(100)
+    df_non_multicollinear = generate_non_multicollinear_data(100)
 
         # Display data
-    st.write("Multicollinear Data vs. Non-Multicollinear Data")
+
 
     # Fit the MLR model and get the coefficients
     mlr_model = smf.ols("y ~ x1 + x2", data=df_multicollinear).fit()
