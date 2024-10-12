@@ -27,7 +27,7 @@ with col2:
     x_max = st.number_input("x_max", value=5)
 
 error_dist = st.sidebar.selectbox(
-    "Select Distribution of Errors", ["Normal", "t", "Uniform", "log-Normal"]
+    "Select Distribution of Errors", ["Normal", "t", "Uniform"]
 )
 noise_level = st.sidebar.slider("Noise Level", .1, 50.0, 15.)
 noise_type = st.sidebar.radio(
