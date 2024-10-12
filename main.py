@@ -34,11 +34,11 @@ noise_type = st.sidebar.radio(
     "Select noise type:",
     ("Homoskedastic", "Heteroskedastic")
 )
-z_noise = st.sidebar.slider("z-axis noise Level", .1, 1000.0, 55.)
-random_seed = st.sidebar.checkbox('Set random seed?')
+
+
 
 # Main logic
-data = generate_synthetic_data(n_samples, intercept, slope, x_min, x_max, error_dist, noise_level, noise_type, random_seed)
+data = generate_synthetic_data(n_samples, intercept, slope, x_min, x_max, error_dist, noise_level, noise_type)
 
 complete_index = data.notnull().all(axis=1)
 data = data[complete_index]
