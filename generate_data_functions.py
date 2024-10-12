@@ -29,9 +29,8 @@ def generate_multicollinear_data(n_samples, noise, z_noise, noise_type):
 
     if noise_type == "Heteroskedastic":
         noise = noise * x/2
-    
 
-    y = x * 1 + np.random.normal(0.0, noise, n_samples)
+    y = x + np.random.normal(0.0, noise, n_samples)
     
     z = (x + y)/2 + np.random.normal(0.0, z_noise, n_samples)
     
@@ -39,13 +38,13 @@ def generate_multicollinear_data(n_samples, noise, z_noise, noise_type):
     return pd.DataFrame({"x": x, "y": y, "z": z})
 
 # Function to generate non-multicollinear data
-def generate_non_multicollinear_data(n=100):
+def generate_non_multicollinear_data(z_noise, n=10):
     np.random.seed(42)
-    x1 = np.random.uniform(1, 10, n)
-    x2 = np.random.uniform(1, 10, n)  # Independent of x1
-    y = 3 * x1 + 4 * x2 + np.random.normal(0, 1, n)
+    x = np.random.uniform(1, 10, n)
+    y = np.random.uniform(1, 10, n)  # Independent of x1
+    z =  (x + y)/2 + np.random.normal(0.0, z_noise, n)
 
-    return pd.DataFrame({"x1": x1, "x2": x2, "y": y})
+    return pd.DataFrame({"x": x, "y": y, "z": z})
 
 
 def generate_data_v2(y_expression="x**2", n=100, xmin=-20, xmax=50, sigma=700):
@@ -62,7 +61,6 @@ def generate_synthetic_data(n_samples, intercept, slope, x_min, x_max, error_dis
 
     np.random.seed(42)  # for reproducability in a classroom?
 
-    
     x = np.random.uniform(low=x_min, high=x_max, size=n_samples)
     # use distr from selectbox
     if error_dist == "Normal":
@@ -77,7 +75,11 @@ def generate_synthetic_data(n_samples, intercept, slope, x_min, x_max, error_dis
         noise = noise * x/2
 
     y = intercept + slope * x + noise
-    y2 = intercept + slope * (x**2) + noise
+    operations = ['x**2', 'np.log(x)', 'np.sqrt(x)', 'np.exp(x)']
+
+
+    func = np.random.choice(operations)
+    y2 = intercept + slope * eval(func) + noise
 
     return pd.DataFrame({"x": x, "y": y, "qx": x, "qy": y2})
 
